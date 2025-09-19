@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "173121738021",
+    "project_id": "sou-chef-d9efb",
+    "storage_bucket": "sou-chef-d9efb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:173121738021:android:5f1921beb5c6764070b6cc",
+        "android_client_info": {
+          "package_name": "com.example.sou_chef_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBm3pd43ko3iqQ2_Th6nnTO36ahJyyPcr8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
