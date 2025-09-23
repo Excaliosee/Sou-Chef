@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
 import 'regsiter_page.dart';
 import '../widgets/my_text_field.dart';
+import '../widgets/my_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -97,8 +98,37 @@ class _LoginPageState extends State<LoginPage> {
 
                 MyTextField(
                   controller: emailController,
-                  hintsText: "Email",
-                  abscureText: false,
+                  hintText: "Email",
+                  obscureText: false,
+                ),
+
+                const SizedBox(height: 25),
+
+                MyTextField(
+                  controller: passwordController,
+                  hintText: "Password",
+                  obscureText: true,
+                ),
+
+                const SizedBox(height: 25),
+
+                MyButton(
+                  onTap: () => {
+
+                  },
+                  text: "Login"
+                ),
+
+                const SizedBox(height: 25),
+
+                MyButton(
+                  onTap: () => {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => RegsiterPage())
+                    ),
+                  }, 
+                  text: "Register"
                 )
               ],
             ),
