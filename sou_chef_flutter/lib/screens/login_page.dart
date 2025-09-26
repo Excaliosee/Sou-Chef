@@ -110,26 +110,56 @@ class _LoginPageState extends State<LoginPage> {
                   obscureText: true,
                 ),
 
-                const SizedBox(height: 25),
+                const SizedBox(height: 10),
 
-                MyButton(
-                  onTap: () => {
-
-                  },
-                  text: "Login"
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Forgot Password?',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 25),
 
                 MyButton(
-                  onTap: () => {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => RegsiterPage())
+                  onTap: signUserIn,
+                  text: "Login"
+                ),
+
+                const SizedBox(height: 50),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Not a member?",
+                      style: TextStyle(color: Colors.grey[700]),
                     ),
-                  }, 
-                  text: "Register"
-                )
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const RegsiterPage(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Register now.",
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  ],
+                ),
               ],
             ),
           ),
