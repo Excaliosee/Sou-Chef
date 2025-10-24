@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sou_chef_flutter/models/recipe.dart';
 
-class RecipeDetialScreen extends StatelessWidget {
+class RecipeDetailScreen extends StatelessWidget {
   final Recipe recipe;
-  const RecipeDetialScreen({super.key, required this.recipe});
+  const RecipeDetailScreen({super.key, required this.recipe});
 
   @override
   Widget build(BuildContext context) {

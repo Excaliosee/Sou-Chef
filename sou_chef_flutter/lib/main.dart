@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
+import 'package:sou_chef_flutter/repositories/recipe_repository.dart';
 import 'firebase_options.dart';
 import 'package:sou_chef_flutter/screens/intro_screen.dart';
 
@@ -8,7 +11,25 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider(
+          create: (context) => RecipeRepository()
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => RecipeBloc(
+              RepositoryProvider.of<RecipeRepository>(context),
+            ),
+          ),
+        ],
+        child: MyApp(),
+      )
+    )
+  );
 }
 
 class MyApp extends StatelessWidget {
