@@ -91,7 +91,7 @@ class VoiceRecordingService {
   }
 
   Future<String?> uploadAudio(String filePath) async {
-    final url = Uri.parse('http://10.0.2.2:8000/api/v1/transcribe/');
+    final url = Uri.parse("http://10.0.2.2:8000/api/v1/transcribe/");
 
     try {
       var request = http.MultipartRequest('POST', url);
