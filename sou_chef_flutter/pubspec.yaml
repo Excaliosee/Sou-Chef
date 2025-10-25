@@ -42,6 +42,11 @@ dependencies:
   redux_thunk: ^0.4.0
   flutter_bloc: ^9.1.1
   equatable: ^2.0.7
+  permission_handler: ^11.4.0
+  flutter_sound: ^9.28.0
+  mic_stream: ^0.7.2
+  path_provider: ^2.1.5
+  http_parser: ^4.0.2
 
 dev_dependencies:
   flutter_test:

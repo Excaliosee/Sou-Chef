@@ -2,5 +2,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('recipes/', views.recipe_list, name='recipe-list-create')
+    path('recipes/', views.recipe_list, name='recipe-list-create'),
+    path('transcribe/', views.transcribe, name='transcribe'),
 ]
