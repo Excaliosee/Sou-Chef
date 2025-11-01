@@ -47,6 +47,7 @@ dependencies:
   mic_stream: ^0.7.2
   path_provider: ^2.1.5
   http_parser: ^4.0.2
+  flutter_tts: ^4.2.3
 
 dev_dependencies:
   flutter_test:
