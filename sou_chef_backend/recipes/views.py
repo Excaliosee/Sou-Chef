@@ -7,7 +7,7 @@ from rest_framework.parsers import MultiPartParser
 # from openai import OpenAI
 import os
 from dotenv import load_dotenv
-from google import genai
+import google.generativeai as genai
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import time
