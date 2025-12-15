@@ -1,13 +1,13 @@
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
 from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from .models import Recipe
 from .serializers import RecipeSerializer
 from rest_framework import status
-from rest_framework.parsers import MultiPartParser
 # from openai import OpenAI
-import os
-from dotenv import load_dotenv
-import google.generativeai as genai
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import time
@@ -19,7 +19,7 @@ load_dotenv()
 # )
 
 try:
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+    client = genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 except Exception as e:
     print(f"Error configuring Gemini: {e}")
     client = None
