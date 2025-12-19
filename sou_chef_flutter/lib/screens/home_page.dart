@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/screens/recipe_detail_screen.dart';
 import 'package:sou_chef_flutter/widgets/my_drawer.dart';
+import 'package:sou_chef_flutter/screens/add_recipe_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +24,16 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddRecipe())
+          );
+        },
+        backgroundColor: Theme.of(context).primaryColor,
+        child: const Icon(Icons.add),
+      ),
       appBar: AppBar(
         title: const Text('Sou-Chef'),
       ),
