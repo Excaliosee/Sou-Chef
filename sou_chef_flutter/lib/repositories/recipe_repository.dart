@@ -47,4 +47,19 @@ class RecipeRepository {
       throw Exception("Error creating Recipe: $e");
     }
   }
+
+  Future<void> deleteRecipe(int id) async {
+    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/$id/");
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception("Failed to delete recipe. Please try again, Status Code: ${response.statusCode}");
+      }
+    }
+    catch (e) {
+      throw Exception("Error deleting recipe: $e");
+    }
+  }
 }
