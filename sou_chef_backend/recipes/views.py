@@ -1,16 +1,18 @@
 import os
+import time
 import google.generativeai as genai
 from dotenv import load_dotenv
+
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+from rest_framework import status, viewsets, permissions
+
 from .models import Recipe
 from .serializers import RecipeSerializer
-from rest_framework import status
 # from openai import OpenAI
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-import time
 
 load_dotenv()
 
@@ -24,19 +26,16 @@ except Exception as e:
     print(f"Error configuring Gemini: {e}")
     client = None
 
-@api_view(['GET', 'POST'])
-def recipe_list(request):
-    if request.method == 'GET':
-        recipes = Recipe.objects.all()
-        serializer = RecipeSerializer(recipes, many=True)
-        return Response(serializer.data)
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        return Recipe.objects.prefetch_related('ingredients__ingredient', 'steps').all().order_by('-created_at')
     
-    elif request.method == 'POST':
-        serializer = RecipeSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
     
 @api_view(['POST'])
 @parser_classes([MultiPartParser])

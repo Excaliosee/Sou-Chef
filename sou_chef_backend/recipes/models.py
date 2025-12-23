@@ -1,16 +1,38 @@
 from django.db import models
+from django.contrib.auth.models import User
 
+class Ingredient(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    def __str__(self):
+        return self.name
+    
 class Recipe(models.Model):
-    title = models.CharField(max_length=50)
-    description = models.TextField()
-    ingredients = models.TextField(help_text="Separate ingredients by new line.")
-    instructions = models.TextField()
-    prep_time = models.IntegerField(help_text="Add in minutes.")
-    cook_time = models.IntegerField(help_text="Add in minutes.")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
 
-    created_by = models.CharField(max_length=128)
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+
+    prep_time = models.PositiveBigIntegerField()
+    cook_time = models.PositiveBigIntegerField()
+
     created_at = models.DateTimeField(auto_now_add=True)
 
-
-    def __str__(self):
+    def __str__(self): 
         return self.title
+    
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="ingredients")
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    quantity = models.CharField(max_length=50)
+
+    class Meta:
+        unique_together = ("recipe", "ingredient")
+
+class RecipeStep(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="steps")
+    step_number = models.PositiveBigIntegerField()
+    instruction = models.TextField()
+
+    class Meta:
+        ordering = ['step_number']
+        unique_together = ('recipe', 'step_number')
