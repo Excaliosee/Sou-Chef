@@ -158,7 +158,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
 
-                MyTimer(initialDuration: widget.recipe.cookTime * 60),
+                Center(child: MyTimer(initialDuration: widget.recipe.cookTime * 60)),
                 const Divider(height: 32, thickness: 1),
                 
                 Text(
@@ -190,32 +190,82 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 
-                const SizedBox(height: 8),
-        
-                Text(
-                  widget.recipe.ingredients.replaceAll('\\n', '\n'),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
-                ),
-        
+                const SizedBox(height: 16),
+      
+                if (widget.recipe.ingredients.isEmpty)
+                  const Center(child: Text("No ingredients listed.")),
+
+                ...widget.recipe.ingredients.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical:6.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.circle, size: 6, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          item.quantity,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          item.name,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+
                 const Divider(height: 32, thickness: 1),
 
-                Container(
-                  key: _instructionsKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Instructions",
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.recipe.instructions.replaceAll("\n\n", "\n"),
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
-                      )
-                    ],
-                  ),
-                )
+                Text(
+                  "Instructions",
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 16),
+
+                if (widget.recipe.steps.isEmpty)
+                  const Text("No instructions provided."),
+
+                ...widget.recipe.steps.map((step) {
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 24),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade400,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            "${step.stepNumber}",
+                            style: TextStyle(
+                              color: Colors.blueGrey,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Text(
+                            step.instruction,
+                            style: const TextStyle(fontSize: 16, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                })
               ],
             ),
           ),

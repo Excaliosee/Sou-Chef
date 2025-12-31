@@ -70,9 +70,7 @@ class MyRecipesPage extends StatelessWidget {
               }
 
               if (state is RecipeLoaded) {
-                final myRecipes = state.recipes.where((recipe) {
-                  return recipe.createdBy == user.uid;
-                }).toList();
+                final myRecipes = state.recipes;
 
                 if (myRecipes.isEmpty) {
                   return const Center(
