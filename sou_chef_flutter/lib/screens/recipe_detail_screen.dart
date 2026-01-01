@@ -18,7 +18,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final TimerBloc _timerBloc = TimerBloc();
   final FlutterTts _flutterTts = FlutterTts();
   final VoiceRecordingService _recordingService = VoiceRecordingService();
-  final GlobalKey _instructionsKey = GlobalKey();
+  // final GlobalKey _instructionsKey = GlobalKey();
 
   // bool _isRecording = false;
   // bool _isProcessing = false;

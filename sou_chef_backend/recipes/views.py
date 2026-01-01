@@ -3,7 +3,7 @@ import time
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
@@ -13,6 +13,8 @@ from .serializers import RecipeSerializer
 # from openai import OpenAI
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+
+from .permissions import IsOwnerOrReadOnly
 
 load_dotenv()
 
@@ -29,13 +31,22 @@ except Exception as e:
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    # permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         return Recipe.objects.prefetch_related('ingredients__ingredient', 'steps').all().order_by('-created_at')
     
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    @action(detail = False, methods = ['get'], permission_classes = [permissions.IsAuthenticated])
+    def mine(self, request):
+        user = request.user
+        my_recipes = Recipe.objects.filter(created_by = user)
+        serializer = self.get_serializer(my_recipes, many = True)
+        return Response(serializer.data)
+    
     
 @api_view(['POST'])
 @parser_classes([MultiPartParser])

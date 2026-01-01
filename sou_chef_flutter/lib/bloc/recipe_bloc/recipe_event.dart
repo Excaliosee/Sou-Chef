@@ -8,3 +8,10 @@ abstract class RecipeEvent extends Equatable{
 }
 
 class FetchRecipes extends RecipeEvent{}
+
+class FetchMyRecipes extends RecipeEvent{}
+
+class DeleteRecipe extends RecipeEvent{
+  final int recipeId;
+  const DeleteRecipe(this.recipeId);
+}

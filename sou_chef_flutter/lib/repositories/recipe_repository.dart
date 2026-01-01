@@ -16,18 +16,40 @@ class RecipeRepository {
       }
       else {
         throw Exception(
-          'Failed to load recipes. Status Code: ${response.statusCode}'
+          "Recipes could not be loaded. Status Code: ${response.statusCode}"
         );
       }
     }
     catch (e) {
-      throw Exception('An unknown error occured: ${e.toString()}');
+      throw Exception("An unknown error has occured: ${e.toString()}");
+    }
+  }
+
+  Future<List<Recipe>> fetchMyRecipes() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("You are not logged in.");
+
+    final token = await user.getIdToken(true);
+    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/mine/");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization" : "Bearer $token",
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return recipeFromJson(response.body);
+    }
+    else {
+      throw Exception("Could not load your recipes: ${response.statusCode}");
     }
   }
 
   Future<void> createRecipe(Map<String, dynamic> recipeData) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("User is not logged in.");
+    if (user == null) throw Exception("You are not logged in.");
 
     final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/");
     final String? token = await user.getIdToken(true);
@@ -53,7 +75,7 @@ class RecipeRepository {
         print("Recipe created successfully.");
       }
       else {
-        throw Exception("Failed to create a recipe. Status Code: ${response.statusCode}\nBody: ${response.body}");
+        throw Exception("Could not create a recipe. Status Code: ${response.statusCode}\nBody: ${response.body}");
       }
     }
     catch (e) {
@@ -62,13 +84,23 @@ class RecipeRepository {
   }
 
   Future<void> deleteRecipe(int id) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("User is logged out.");
+
+    final token = await user.getIdToken(true);
     final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/$id/");
 
     try {
-      final response = await http.delete(url);
+      final response = await http.delete(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token"
+        }
+      );
 
       if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception("Failed to delete recipe. Please try again, Status Code: ${response.statusCode}");
+        throw Exception("Failed to delete recipe. Status Code: ${response.statusCode}");
       }
     }
     catch (e) {

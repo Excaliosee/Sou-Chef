@@ -16,10 +16,11 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True)
     steps = RecipeStepSerializer(many=True)
+    created_by = serializers.ReadOnlyField(source = "created_by.email")
 
     class Meta:
         model = Recipe
-        fields = ["id", "title", "description", "prep_time", "cook_time", "ingredients", "steps", "created_at"]
+        fields = ["id", "title", "description", "prep_time", "cook_time", "ingredients", "steps", "created_at", "created_by"]
         read_only_fields = ["created_by", "created_at"]
 
     def create(self, validated_data):
