@@ -5,6 +5,15 @@ import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/repositories/recipe_repository.dart';
 import 'package:sou_chef_flutter/widgets/my_button.dart';
 
+class _IngredientRow{
+  final TextEditingController name = TextEditingController();
+  final TextEditingController quantity = TextEditingController();
+}
+
+class _StepRow{
+  final TextEditingController instruction = TextEditingController();
+}
+
 class AddRecipe extends StatefulWidget {
   const AddRecipe({super.key});
 
@@ -17,22 +26,60 @@ class _AddRecipeState extends State<AddRecipe> {
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _ingredientsController = TextEditingController();
-  final _instructionsController = TextEditingController();
   final _prepTimeController = TextEditingController();
   final _cookTimeController = TextEditingController();
-
+  final List<_IngredientRow> _ingredientRows = [];
+  final List<_StepRow> _stepRows = [];
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _addIngredient();
+    _addStep();
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _ingredientsController.dispose();
-    _instructionsController.dispose();
     _prepTimeController.dispose();
     _cookTimeController.dispose();
+    for (var row in _ingredientRows) {
+      row.name.dispose();
+      row.quantity.dispose();
+    }
+    for (var row in _stepRows) {
+      row.instruction.dispose();
+    }
     super.dispose();
+  }
+
+  void _addIngredient() {
+    setState(() {
+      _ingredientRows.add(_IngredientRow());
+    });
+  }
+
+  void _removeIngredient(int index) {
+    setState(() {
+      _ingredientRows[index].name.dispose();
+      _ingredientRows[index].quantity.dispose();
+      _ingredientRows.removeAt(index);
+    });
+  }
+
+  void _addStep() {
+    setState(() {
+      _stepRows.add(_StepRow());
+    });
+  }
+
+  void _removeStep(int index) {
+    setState(() {
+      _stepRows[index].instruction.dispose();
+      _stepRows.removeAt(index);
+    });
   }
 
   Future<void> _submitRecipe() async {
@@ -47,14 +94,30 @@ class _AddRecipeState extends State<AddRecipe> {
           throw Exception("Not legged in.");
         }
 
+        final ingredientsList = _ingredientRows.map((row) {
+          return {
+            "name": row.name.text,
+            "quantity": row.quantity.text,
+          };
+        }).toList();
+
+        final stepsList = _stepRows.asMap().entries.map((entry) {
+          int index = entry.key;
+          _StepRow row = entry.value;
+          return {
+            "step_number": index + 1,
+            "instruction": row.instruction.text,
+          };
+        }).toList();
+
         final recipeData = {
           "title": _titleController.text,
           "description": _descriptionController.text,
-          "ingredients": _ingredientsController.text,
-          "instructions": _instructionsController.text,
           "prep_time": int.parse(_prepTimeController.text),
           "cook_time": int.parse(_cookTimeController.text),
           "created_by": user.uid,
+          "ingredients": ingredientsList,
+          "steps": stepsList,
         };
 
         final repository = RepositoryProvider.of<RecipeRepository>(context);
@@ -107,7 +170,7 @@ class _AddRecipeState extends State<AddRecipe> {
         ),
         validator: validator ?? (value) {
           if (value == null || value.isEmpty) {
-            return "Please enter $hint";
+            return "Required";
           }
           return null;
         },
@@ -124,23 +187,17 @@ class _AddRecipeState extends State<AddRecipe> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTextField(controller: _titleController, hint: "Title"),
               _buildTextField(controller: _descriptionController, hint: "Description"),
-              _buildTextField(controller: _ingredientsController, hint: "Ingredients", maxLines: 5),
-              _buildTextField(controller: _instructionsController, hint: "Instructions", maxLines: 5),
               Row(
                 children: [
                   Expanded(
                     child: _buildTextField(
                       controller: _prepTimeController,
-                      hint: "Prep Time",
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return "Required value";
-                        if (int.tryParse(value) == null) return "Invalid Value";
-                        return null;
-                      },     
+                      hint: "Prep (mins)",
+                      keyboardType: TextInputType.number, 
                     ),
                   ),
 
@@ -150,18 +207,75 @@ class _AddRecipeState extends State<AddRecipe> {
                     child: _buildTextField(
                       controller: _cookTimeController,
                       hint: "Cook Time",
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return "Required value";
-                        if (int.tryParse(value) == null) return "Invalid Value";
-                        return null;
-                      },     
+                      keyboardType: TextInputType.number,    
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
 
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Ingredients", style: Theme.of(context).textTheme.titleMedium),
+                  IconButton(onPressed: _addIngredient, icon: const Icon(Icons.add, color: Colors.green)
+                  ),
+                ],
+              ),
+
+              ..._ingredientRows.asMap().entries.map((entry) {
+                int index = entry.key;
+                _IngredientRow row = entry.value;
+                return Row(
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      child: _buildTextField(controller: row.quantity, hint: "Qty"),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildTextField(controller: row.name, hint: "Ingredient Name")),
+
+                    IconButton(onPressed: () => _removeIngredient(index), icon: const Icon(Icons.delete, color: Colors.redAccent)),
+
+                  ],
+                );
+              }),
+
+              const Divider(height: 30),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Instructions", style: Theme.of(context).textTheme.titleMedium),
+                  IconButton(onPressed: _addStep, icon: const Icon(Icons.add, color: Colors.green)),
+                ],
+              ),
+
+              ..._stepRows.asMap().entries.map((entry) {
+                int index = entry.key;
+                _StepRow row = entry.value;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0, right: 8.0),
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Colors.orange.shade100,
+                        child: Text("${index + 1}", style: const TextStyle(fontSize: 12)),
+                      ),
+                    ),
+
+                    Expanded(
+                      child: _buildTextField(controller: row.instruction, hint: "Describe step ${index + 1}", maxLines: 2),
+                    ),
+
+                    IconButton(onPressed: () => _removeStep(index), icon: const Icon(Icons.delete, color: Colors.redAccent)),
+                  ],
+                );
+              }),
+
+              const SizedBox(height: 20),
               _isSubmitting ? const CircularProgressIndicator() : MyButton(onTap: _submitRecipe, text: "Submit"),
             ],
           ),
