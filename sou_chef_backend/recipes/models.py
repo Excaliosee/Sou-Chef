@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -7,7 +8,7 @@ class Ingredient(models.Model):
         return self.name
     
 class Recipe(models.Model):
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipes')
 
     title = models.CharField(max_length=100)
     description = models.TextField()
@@ -16,6 +17,7 @@ class Recipe(models.Model):
     cook_time = models.PositiveBigIntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_recipes", blank=True)
 
     def __str__(self): 
         return self.title

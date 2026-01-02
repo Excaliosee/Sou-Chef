@@ -40,11 +40,32 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
-    @action(detail = False, methods = ['get'], permission_classes = [permissions.IsAuthenticated])
+    @action(detail = False, methods = ["get"], permission_classes = [permissions.IsAuthenticated])
     def mine(self, request):
         user = request.user
         my_recipes = Recipe.objects.filter(created_by = user)
         serializer = self.get_serializer(my_recipes, many = True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods= ["post"], permission_classes = [permissions.IsAuthenticated])
+    def like(self, request, pk=None):
+        recipe = self.get_object()
+        user = request.user
+
+        if user in recipe.likes.all():
+            recipe.likes.remove(user)
+            liked = False
+        else:
+            recipe.likes.add(user)
+            liked = True
+
+        return Response({"liked":liked, "likes_count":recipe.likes.count()})
+    
+    @action(detail=False, methods=["get"], permission_classes = [permissions.IsAuthenticated])
+    def favorites(self, request):
+        liked_recipes = Recipe.objects.filter(likes = request.user).order_by("-id")
+
+        serializer = self.get_serializer(liked_recipes, many = True)
         return Response(serializer.data)
     
     

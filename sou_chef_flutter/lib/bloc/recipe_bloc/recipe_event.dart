@@ -15,3 +15,10 @@ class DeleteRecipe extends RecipeEvent{
   final int recipeId;
   const DeleteRecipe(this.recipeId);
 }
+
+class ToggleLike extends RecipeEvent{
+  final int recipeId;
+  const ToggleLike(this .recipeId);
+}
+
+class FetchFavorites extends RecipeEvent{}

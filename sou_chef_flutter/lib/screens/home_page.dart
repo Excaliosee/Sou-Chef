@@ -4,6 +4,7 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/repositories/recipe_repository.dart';
+import 'package:sou_chef_flutter/screens/likes_page.dart';
 import 'package:sou_chef_flutter/screens/my_recipes_page.dart';
 import 'package:sou_chef_flutter/screens/recipe_page.dart';
 import 'package:sou_chef_flutter/widgets/my_drawer.dart';
@@ -22,7 +23,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const RecipePage(),
-    const Center(child: Text("Likes Page", style: TextStyle(fontSize: 24))),
+    const LikesPage(),
     const Center(child: Text("Search Page", style: TextStyle(fontSize: 24))),
     const MyRecipesPage(),
   ];
@@ -86,7 +87,7 @@ class _HomePageState extends State<HomePage> {
                         text: 'Home',
                       ),
                       GButton(
-                        icon: Icons.heart_broken,
+                        icon: Icons.favorite,
                         text: 'Likes',
                       ),
                       GButton(

@@ -107,4 +107,47 @@ class RecipeRepository {
       throw Exception("Error deleting recipe: $e");
     }
   }
+
+  Future<void> toggleLike(int id) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("You ar elogged out.");
+
+    final token = await user.getIdToken(true);
+    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/$id/like/");
+
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      }
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Could not like.");
+    }
+  }
+
+  Future<List<Recipe>> getFavorites() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("You ar elogged out.");
+
+    final token = await user.getIdToken(true);
+    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/favorites/");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      }
+    );
+
+    if (response.statusCode == 200) {
+      return recipeFromJson(response.body);
+    }
+    else {
+      throw Exception("Could not load your favorites.");
+    }
+  }
 }

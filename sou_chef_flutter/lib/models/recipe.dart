@@ -18,6 +18,10 @@ class Recipe {
   final List<RecipeIngredient> ingredients;
   final List<RecipeStep> steps;
 
+  final int likesCount;
+  final bool isLiked;
+  final String createdBy;
+
   Recipe({
     required this.id,
     required this.title,
@@ -27,6 +31,9 @@ class Recipe {
     required this.createdAt,
     required this.ingredients,
     required this.steps,
+    this.isLiked = false,
+    this.likesCount = 0,
+    required this.createdBy,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) => Recipe(
@@ -36,10 +43,13 @@ class Recipe {
     prepTime: json["prep_time"],
     cookTime: json["cook_time"],
     createdAt: DateTime.parse(json["created_at"]),
+    likesCount: json["likes_count"] ?? 0,
+    isLiked: json["is_liked"] == true || json["is_liked"] == 1,
     ingredients: List<RecipeIngredient>.from(
       json["ingredients"].map((x) => RecipeIngredient.fromJson(x))),
     steps: List<RecipeStep>.from(
       json["steps"].map((x) => RecipeStep.fromJson(x))),
+    createdBy: json["created_by"] is Map ? json["created_by"]["username"] : (json["created_by"] ?? "Unknown").toString(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -49,6 +59,9 @@ class Recipe {
     "prep_time": prepTime,
     "cook_time": cookTime,
     "created_at": createdAt.toIso8601String(),
+    "likes_count": likesCount,
+    "is_liked": isLiked,
+    "created_by": createdBy,
     "ingredients": List<dynamic>.from(ingredients.map((x) => x.toJson())),
     "steps": List<dynamic>.from(steps.map((x) => x.toJson())),
   };

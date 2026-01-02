@@ -18,9 +18,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     steps = RecipeStepSerializer(many=True)
     created_by = serializers.ReadOnlyField(source = "created_by.email")
 
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+
     class Meta:
         model = Recipe
-        fields = ["id", "title", "description", "prep_time", "cook_time", "ingredients", "steps", "created_at", "created_by"]
+        fields = ["id", "title", "description", "prep_time", "cook_time", "ingredients", "steps", "created_at", "created_by", "likes_count", "is_liked"]
         read_only_fields = ["created_by", "created_at"]
 
     def create(self, validated_data):
@@ -75,3 +78,12 @@ class RecipeSerializer(serializers.ModelSerializer):
                 RecipeStep.objects.create(recipe=instance, **step)
         
         return instance
+    
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+    
+    def get_is_liked(self, obj):
+        user = self.context.get("request").user
+        if user and user.is_authenticated:
+            return obj.likes.filter(id=user.id).exists()
+        return False
