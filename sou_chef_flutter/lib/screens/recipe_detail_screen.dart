@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/bloc/timer_bloc/timer_bloc.dart';
 import 'package:sou_chef_flutter/models/recipe.dart';
 import 'package:sou_chef_flutter/widgets/my_timer.dart';
@@ -139,6 +140,33 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: Scaffold(
           appBar: AppBar(
             title: Text(widget.recipe.title),
+            actions: [
+              BlocBuilder<RecipeBloc,RecipeState>(
+                builder: (context, state) {
+                  Recipe curr = widget.recipe;
+                  if (state is RecipeLoaded) {
+                    try {
+                      curr = state.recipes.firstWhere((r) => r.id == widget.recipe.id);
+                    }
+                    catch(e) {
+                      print("Failed");
+                    }
+                  }
+
+                  return Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          context.read<RecipeBloc>().add(ToggleLike(curr.id));
+                        },
+                        icon: Icon(curr.isLiked ? Icons.favorite : Icons.favorite_border, color: curr.isLiked ? Colors.red : null),
+                      ),
+                      Text("${curr.likesCount}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  );
+                }
+              ),
+            ]
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
           // floatingActionButton: FloatingActionButton(

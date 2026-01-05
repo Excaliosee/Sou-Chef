@@ -23,11 +23,17 @@ class MyDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: <Widget>[
           UserAccountsDrawerHeader(
-            accountName: const Text("Active Account."), 
+            accountName: Text(
+              user?.displayName ?? "Chef",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ), 
             accountEmail: Text(user?.email ?? "No email"),
-            currentAccountPicture: const CircleAvatar(
+            currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 40),
+              child: Text(
+                (user?.displayName ?? "U")[0].toUpperCase(),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
             ),
             decoration: BoxDecoration(
               color: Colors.grey[900],

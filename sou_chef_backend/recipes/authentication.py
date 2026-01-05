@@ -8,7 +8,6 @@ from django.contrib.auth.models import User
 if not firebase_admin._apps:
     cred = credentials.Certificate(settings.FIREBASE_ADMIN_CREDENTIALS_PATH) 
     firebase_admin.initialize_app(cred)
-    
 
 class FirebaseAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
@@ -28,13 +27,38 @@ class FirebaseAuthentication(authentication.BaseAuthentication):
         try:
             decoded_token = auth.verify_id_token(token, clock_skew_seconds=10)
             uid = decoded_token['uid']
+            email = decoded_token.get('email', '')
         except Exception as e:
             print(f"\nToken Verification Failed: {e}")
             raise exceptions.AuthenticationFailed('Invalid Firebase token')
 
-        try:
-            user, created = User.objects.get_or_create(username=uid)
-        except Exception:
-             raise exceptions.AuthenticationFailed('User could not be created/found')
+        user = None
+
+        if email:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                pass
+            except User.MultipleObjectsReturned:
+                user = User.objects.filter(email=email).first()
+
+        if not user:
+            try:
+                user = User.objects.get(username=uid)
+                
+                if email and not user.email:
+                    user.email = email
+                    user.save()
+                    print(f"✅ Self-healed user {user.username}: Saved email {email}")
+
+            except User.DoesNotExist:
+                pass
+
+        if not user:
+            try:
+                user = User.objects.create_user(username=uid, email=email)
+                print(f"🆕 Created new user: {uid} with email {email}")
+            except Exception as e:
+                raise exceptions.AuthenticationFailed('User could not be created')
 
         return (user, None)

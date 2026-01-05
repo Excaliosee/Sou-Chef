@@ -15,6 +15,8 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
 from .permissions import IsOwnerOrReadOnly
+from rest_framework.authentication import SessionAuthentication
+from recipes.authentication import FirebaseAuthentication
 
 load_dotenv()
 
@@ -32,6 +34,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    authentication_classes = [FirebaseAuthentication, SessionAuthentication]
     # permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):

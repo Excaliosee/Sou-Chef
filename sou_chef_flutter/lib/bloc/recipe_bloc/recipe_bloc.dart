@@ -93,8 +93,12 @@ class RecipeBloc extends Bloc<RecipeEvent,RecipeState>{
         print("Error liking recipe: $e");
         add(FetchRecipes());
       }
-
     }
+    else {
+      add(FetchRecipes());
+    }
+
+    
   }
 
   Future<void> _fetchFavorites(

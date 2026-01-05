@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
 import 'regsiter_page.dart';
 import '../widgets/my_text_field.dart';
 import '../widgets/my_button.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -29,10 +32,29 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text, 
         password: passwordController.text,
       );
+
+      final user = userCredential.user;
+      if (user != null && (user.displayName == null || user.displayName!.isEmpty)) {
+        final token = await user.getIdToken(true);
+        final response = await http.get(
+          Uri.parse("http://10.0.2.2:8000/api/v1/users/me/"),
+          headers: {
+            "Authorization": "Bearer $token",
+          }
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final djangouser = data["username"];
+
+          await user.updateDisplayName(djangouser);
+          await user.reload();
+        }
+      }
 
       if (!mounted) return;
       Navigator.pop(context);

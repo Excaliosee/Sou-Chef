@@ -29,92 +29,91 @@ class _HomePageState extends State<HomePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    context.read<RecipeBloc>().add(FetchRecipes());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => RecipeBloc(RecipeRepository())..add(FetchRecipes()),
-      child: Builder(
-        builder: (innerContext) {
-          return Scaffold(
-            floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
-              onPressed: () async {
-                await Navigator.push(
-                  innerContext,
-                  MaterialPageRoute(builder: (context) => AddRecipe())
-                );
-                
-                if (!innerContext.mounted) {
-                  return;
-                }
-                innerContext.read<RecipeBloc>().add(FetchRecipes());
-              },
-              backgroundColor: Theme.of(innerContext).primaryColor,
-              child: const Icon(Icons.add),
-            ): null,
-            appBar: AppBar(
-              title: const Text('Sou-Chef'),
+    return Scaffold(
+          floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddRecipe())
+              );
+              
+              if (!context.mounted) {
+                return;
+              }
+              context.read<RecipeBloc>().add(FetchRecipes());
+            },
+            backgroundColor: Theme.of(context).primaryColor,
+            child: const Icon(Icons.add),
+          ): null,
+          appBar: AppBar(
+            title: const Text('Sou-Chef'),
+          ),
+          drawer: MyDrawer(),
+        
+          body: _pages[_selectedIndex],
+        
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 20,
+                  color: Colors.black.withOpacity(.1),
+                )
+              ],
             ),
-            drawer: MyDrawer(),
-          
-            body: _pages[_selectedIndex],
-          
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 20,
-                    color: Colors.black.withOpacity(.1),
-                  )
-                ],
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
-                  child: GNav(
-                    rippleColor: Colors.grey[300]!,
-                    hoverColor: Colors.grey[100]!,
-                    gap: 8,
-                    haptic: true,
-                    activeColor: Colors.black,
-                    iconSize: 24,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    duration: Duration(milliseconds: 400),
-                    tabBackgroundColor: Colors.grey[100]!,
-                    color: Colors.black,
-                    tabs: [
-                      GButton(
-                        icon: Icons.home,
-                        text: 'Home',
-                      ),
-                      GButton(
-                        icon: Icons.favorite,
-                        text: 'Likes',
-                      ),
-                      GButton(
-                        icon: Icons.search,
-                        text: 'Search',
-                      ),
-                      GButton(
-                        icon: Icons.person,
-                        text: 'Profile',
-                      ),
-                    ],
-                    selectedIndex: _selectedIndex,
-                    onTabChange: (index) {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                      if (index == 0) {
-                        innerContext.read<RecipeBloc>().add(FetchRecipes());
-                      }
-                    },
-                  ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
+                child: GNav(
+                  rippleColor: Colors.grey[300]!,
+                  hoverColor: Colors.grey[100]!,
+                  gap: 8,
+                  haptic: true,
+                  activeColor: Colors.black,
+                  iconSize: 24,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  duration: Duration(milliseconds: 400),
+                  tabBackgroundColor: Colors.grey[100]!,
+                  color: Colors.black,
+                  tabs: [
+                    GButton(
+                      icon: Icons.home,
+                      text: 'Home',
+                    ),
+                    GButton(
+                      icon: Icons.favorite,
+                      text: 'Likes',
+                    ),
+                    GButton(
+                      icon: Icons.search,
+                      text: 'Search',
+                    ),
+                    GButton(
+                      icon: Icons.person,
+                      text: 'Profile',
+                    ),
+                  ],
+                  selectedIndex: _selectedIndex,
+                  onTabChange: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                    if (index == 0) {
+                      context.read<RecipeBloc>().add(FetchRecipes());
+                    }
+                  },
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
+          ),
+        );
   }
 }

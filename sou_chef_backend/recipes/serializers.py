@@ -16,7 +16,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True)
     steps = RecipeStepSerializer(many=True)
-    created_by = serializers.ReadOnlyField(source = "created_by.email")
+    created_by = serializers.ReadOnlyField(source = "created_by.username")
 
     likes_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()

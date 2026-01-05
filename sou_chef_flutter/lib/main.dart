@@ -23,7 +23,7 @@ Future<void> main() async {
           BlocProvider(
             create: (context) => RecipeBloc(
               RepositoryProvider.of<RecipeRepository>(context),
-            ),
+            )..add(FetchRecipes()),
           ),
         ],
         child: MyApp(),

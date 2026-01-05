@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 import 'login_page.dart';
 import '../widgets/my_text_field.dart';
 import '../widgets/my_button.dart';
@@ -15,6 +18,7 @@ class _RegsiterPageState extends State<RegsiterPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final usernameController = TextEditingController();
 
   void signUserUp() async {
     showDialog(
@@ -32,11 +36,21 @@ class _RegsiterPageState extends State<RegsiterPage> {
       return;
     }
 
+    if (usernameController.text.isEmpty) {
+      Navigator.pop(context);
+      showErrorMessage("Please enter a username");
+      return;
+    }
+
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text,
         password: passwordController.text
       );
+
+      final user = userCredential.user;
+      await user?.updateDisplayName(usernameController.text.trim());
+      await user?.reload();
 
       if (!mounted) return;
       Navigator.pop(context);
@@ -102,6 +116,14 @@ class _RegsiterPageState extends State<RegsiterPage> {
                 MyTextField(
                   controller: emailController, 
                   hintText: "Email", 
+                  obscureText: false
+                ),
+
+                const SizedBox(height: 25),
+
+                MyTextField(
+                  controller: usernameController, 
+                  hintText: "Username", 
                   obscureText: false
                 ),
 
