@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:sou_chef_flutter/models/recipe.dart';
 
+final String baseURL = "http://192.168.1.8:8000";
+
 class RecipeRepository {
   Future<List<Recipe>> fetchRecipes() async {
-    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/");
+    final url = Uri.parse("$baseURL/api/v1/recipes/");
 
     try {
       final response = await http.get(url);
@@ -30,7 +32,7 @@ class RecipeRepository {
     if (user == null) throw Exception("You are not logged in.");
 
     final token = await user.getIdToken(true);
-    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/mine/");
+    final url = Uri.parse("$baseURL/api/v1/recipes/mine/");
 
     final response = await http.get(
       url,
@@ -51,7 +53,7 @@ class RecipeRepository {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception("You are not logged in.");
 
-    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/");
+    final url = Uri.parse("$baseURL/api/v1/recipes/");
     final String? token = await user.getIdToken(true);
 
     if (token == null) {
@@ -88,7 +90,7 @@ class RecipeRepository {
     if (user == null) throw Exception("User is logged out.");
 
     final token = await user.getIdToken(true);
-    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/$id/");
+    final url = Uri.parse("$baseURL/api/v1/recipes/$id/");
 
     try {
       final response = await http.delete(
@@ -113,7 +115,7 @@ class RecipeRepository {
     if (user == null) throw Exception("You ar elogged out.");
 
     final token = await user.getIdToken(true);
-    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/$id/like/");
+    final url = Uri.parse("$baseURL/api/v1/recipes/$id/like/");
 
     final response = await http.post(
       url,
@@ -133,7 +135,7 @@ class RecipeRepository {
     if (user == null) throw Exception("You ar elogged out.");
 
     final token = await user.getIdToken(true);
-    final url = Uri.parse("http://10.0.2.2:8000/api/v1/recipes/favorites/");
+    final url = Uri.parse("$baseURL/api/v1/recipes/favorites/");
 
     final response = await http.get(
       url,
