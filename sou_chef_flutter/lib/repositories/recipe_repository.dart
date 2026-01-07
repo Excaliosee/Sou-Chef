@@ -7,25 +7,34 @@ import 'package:sou_chef_flutter/models/recipe.dart';
 final String baseURL = "http://192.168.1.8:8000";
 
 class RecipeRepository {
-  Future<List<Recipe>> fetchRecipes() async {
-    final url = Uri.parse("$baseURL/api/v1/recipes/");
+    Future<List<Recipe>> fetchRecipes() async {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception("You are not logged in.");
+      final url = Uri.parse("$baseURL/api/v1/recipes/");
+      final token = await user.getIdToken(true);
 
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        return recipeFromJson(response.body);
-      }
-      else {
-        throw Exception(
-          "Recipes could not be loaded. Status Code: ${response.statusCode}"
+      try {
+        final response = await http.get(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $token",
+          }
         );
+
+        if (response.statusCode == 200) {
+          return recipeFromJson(response.body);
+        }
+        else {
+          throw Exception(
+            "Recipes could not be loaded. Status Code: ${response.statusCode}"
+          );
+        }
+      }
+      catch (e) {
+        throw Exception("An unknown error has occured: ${e.toString()}");
       }
     }
-    catch (e) {
-      throw Exception("An unknown error has occured: ${e.toString()}");
-    }
-  }
 
   Future<List<Recipe>> fetchMyRecipes() async {
     final user = FirebaseAuth.instance.currentUser;

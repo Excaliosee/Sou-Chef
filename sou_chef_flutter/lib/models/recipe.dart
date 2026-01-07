@@ -36,21 +36,50 @@ class Recipe {
     required this.createdBy,
   });
 
-  factory Recipe.fromJson(Map<String, dynamic> json) => Recipe(
+  factory Recipe.fromJson(Map<String, dynamic> json) {
+  // --- 🕵️ DETECTIVE BLOCK START ---
+  // This helps us catch the "2 Likes" bug. 
+  // Watch your Debug Console for these logs when you reload the page!
+  if (json["likes_count"] != null && json["likes_count"] > 0) {
+    print("🔍 RECIPE ID [${json['id']}]: Server sent Likes=${json['likes_count']} | is_liked=${json['is_liked']} (${json['is_liked'].runtimeType})");
+  }
+  // --- DETECTIVE BLOCK END ---
+
+  // Helper to safely parse the creator, handling both Maps and Strings
+  String parseCreator(dynamic createdByField) {
+    if (createdByField is Map) {
+      return createdByField["username"] ?? "Unknown";
+    }
+    return (createdByField ?? "Unknown").toString();
+  }
+
+  return Recipe(
     id: json["id"],
-    title: json["title"],
-    description: json["description"],
-    prepTime: json["prep_time"],
-    cookTime: json["cook_time"],
-    createdAt: DateTime.parse(json["created_at"]),
+    title: json["title"] ?? "Untitled Recipe", // Safety default
+    description: json["description"] ?? "",
+    prepTime: json["prep_time"] ?? 0,
+    cookTime: json["cook_time"] ?? 0,
+    
+    // Safety: tryParse prevents app crash if date string is malformed
+    createdAt: DateTime.tryParse(json["created_at"].toString()) ?? DateTime.now(),
+    
     likesCount: json["likes_count"] ?? 0,
-    isLiked: json["is_liked"] == true || json["is_liked"] == 1,
-    ingredients: List<RecipeIngredient>.from(
-      json["ingredients"].map((x) => RecipeIngredient.fromJson(x))),
-    steps: List<RecipeStep>.from(
-      json["steps"].map((x) => RecipeStep.fromJson(x))),
-    createdBy: json["created_by"] is Map ? json["created_by"]["username"] : (json["created_by"] ?? "Unknown").toString(),
+    
+    // logic: Handles boolean true, integer 1, or string "true"
+    isLiked: json["is_liked"] == true || json["is_liked"] == 1 || json["is_liked"].toString() == 'true',
+
+    // Safety: Handles null lists gracefully
+    ingredients: json["ingredients"] != null 
+        ? List<RecipeIngredient>.from(json["ingredients"].map((x) => RecipeIngredient.fromJson(x)))
+        : [],
+        
+    steps: json["steps"] != null 
+        ? List<RecipeStep>.from(json["steps"].map((x) => RecipeStep.fromJson(x)))
+        : [],
+        
+    createdBy: parseCreator(json["created_by"]),
   );
+}
 
   Map<String, dynamic> toJson() => {
     "id": id,
