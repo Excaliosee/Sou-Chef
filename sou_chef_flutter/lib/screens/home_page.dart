@@ -6,6 +6,7 @@ import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/screens/likes_page.dart';
 import 'package:sou_chef_flutter/screens/my_recipes_page.dart';
 import 'package:sou_chef_flutter/screens/recipe_page.dart';
+import 'package:sou_chef_flutter/screens/search_page.dart';
 import 'package:sou_chef_flutter/widgets/my_drawer.dart';
 import 'package:sou_chef_flutter/screens/add_recipe_page.dart';
 
@@ -19,11 +20,18 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
 
   int _selectedIndex = 0;
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   final List<Widget> _pages = [
     const RecipePage(),
     const LikesPage(),
-    const Center(child: Text("Search Page", style: TextStyle(fontSize: 24))),
+    const SearchPage(),
     const MyRecipesPage(),
   ];
 
@@ -56,7 +64,15 @@ class _HomePageState extends State<HomePage> {
           ),
           drawer: MyDrawer(),
         
-          body: _pages[_selectedIndex],
+          body: PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            children: _pages,
+          ),
         
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
@@ -105,6 +121,7 @@ class _HomePageState extends State<HomePage> {
                     setState(() {
                       _selectedIndex = index;
                     });
+                    _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
                     if (index == 0) {
                       context.read<RecipeBloc>().add(FetchRecipes());
                     }

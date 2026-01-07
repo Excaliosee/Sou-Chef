@@ -26,30 +26,20 @@ class MyRecipesPage extends StatelessWidget {
             width: double.infinity,
             child: Column(
               children: [
-                const CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.person, size: 40, color: Colors.white,)
+                CircleAvatar(
+                  backgroundColor: Colors.white,
+                  radius: 50,
+                  child: Text(
+                    (user.displayName ?? "U")[0].toUpperCase(),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
                 ),
 
                 const SizedBox(height: 10),
 
                 Text(
-                  user.email ?? "User",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-
-                const SizedBox(height: 5),
-
-                Text("User ID: ${user.uid}", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-
-                const SizedBox(height: 10),
-
-                ElevatedButton(
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-                  },
-                  child: const Text("Sign out"), 
+                  user.displayName ?? "Chef",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -60,6 +50,7 @@ class MyRecipesPage extends StatelessWidget {
             child: Text(
               "My Recipes",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
           ),
 
