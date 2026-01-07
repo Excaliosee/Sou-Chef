@@ -1,6 +1,6 @@
 import os
 import time
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 from rest_framework.decorators import api_view, parser_classes, action
@@ -25,7 +25,7 @@ load_dotenv()
 # )
 
 try:
-    client = genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 except Exception as e:
     print(f"Error configuring Gemini: {e}")
     client = None
@@ -75,7 +75,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
 def transcribe(request):
-    if 'audio' not in request.data:
+    if "audio" not in request.data:
         return Response(
             {"error": "No audio file found."},
             status=status.HTTP_400_BAD_REQUEST
@@ -85,6 +85,7 @@ def transcribe(request):
 
     temp_file_name = f"temp_audio_{int(time.time())}_{audio_file.name}"
     file_path = default_storage.save(temp_file_name, ContentFile(audio_file.read()))
+    full_path = default_storage.path(file_path)
 
     # if not client.api_key:
     #     return Response(
@@ -107,24 +108,23 @@ def transcribe(request):
     #     )
 
     try:
-        my_file = client.files.upload(file = file_path)
-        prompt = 'Generate a transcript of the speech.'
+        my_file = client.files.upload(path = full_path)
+        prompt = "Generate a transcript of the speech."
 
-        transcription = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=[prompt, my_file]
-        )
-
-        default_storage.delete(file_path)
+        response = client.models.generate_content(model="gemini-2.0-flash", contents=[my_file, prompt])
         client.files.delete(name=my_file.name)
+        default_storage.delete(file_path)
 
-        return Response({"text": transcription.text})
+        return Response({"text": response.text})
     
     except Exception as e:
-        if 'file_path' in locals():
+        if "file_path" in locals():
             default_storage.delete(file_path)
-        if 'gemini_file' in locals():
-            client.files.delete(name=my_file.name)
+        if "my_file" in locals() and client:
+            try:
+                client.files.delete(name=my_file.name)
+            except:
+                pass
 
         return Response(
             {"error": str(e)},
