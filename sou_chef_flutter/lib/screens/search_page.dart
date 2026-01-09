@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/models/recipe.dart';
+import 'package:sou_chef_flutter/repositories/recipe_repository.dart';
 import 'package:sou_chef_flutter/screens/recipe_detail_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -34,50 +34,58 @@ class _SearchPageState extends State<SearchPage> {
                   leading: const Icon(Icons.search),
                 );
               },
-              suggestionsBuilder: (BuildContext context, SearchController controller) {
+              suggestionsBuilder: (BuildContext context, SearchController controller) async {
                 final String query = controller.text.toLowerCase();
-                final state = context.read<RecipeBloc>().state;
+                if (query.length < 3) {
+                  return [
+                    const Padding(padding: EdgeInsets.all(20), child: Center(child: Text("Please type three letters atleast."))),    
+                  ];
+                }
+              
 
-                if (state is RecipeLoaded) {
-                  final List<Recipe> matches = state.recipes.where((recipe) {
-                    return recipe.title.toLowerCase().contains(query);
-                  }).toList();
-
-                  if (matches.isEmpty) {
+                try {
+                  final List<Recipe> recipes = await context.read<RecipeRepository>().searchRecipes(query);
+                  if (recipes.isEmpty) {
                     return [
                       const Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: Center(child: Text("No yunmy recipes found.")),
-                      ),
+                        padding: EdgeInsets.all(20),
+                        child: Center(child: Text("No recipes found.")),
+                      )
                     ];
                   }
 
-                  return matches.map((recipe) {
-                    return Card(
-                      margin: const EdgeInsets.all(8.0),
-                      child: ListTile(
-                        title: Text(recipe.title),
-                        subtitle: Text(
-                          'Cook Time: ${recipe.cookTime} mins | Prep Time: ${recipe.prepTime} mins',
+                  return recipes.map((recipe) {
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      title: Text(recipe.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text('${recipe.prepTime}m prep', style: const TextStyle(fontSize: 12)),
+                          
+                            const SizedBox(width: 12),
+                            
+                            const Icon(Icons.soup_kitchen, size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text('${recipe.cookTime}m cook', style: const TextStyle(fontSize: 12)),
+                          ],
                         ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          controller.closeView(recipe.title); 
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RecipeDetailScreen(recipe: recipe),
-                            ),
-                          );
-                        },
                       ),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => RecipeDetailScreen(recipe: recipe)));
+                      },
                     );
                   }).toList();
                 }
-
-                return [const Center(child: CircularProgressIndicator())];
-              },
+                catch (e) {
+                  return [Center(child: Text("Error searching: $e"))];
+                }
+              }
             )
           ),
 

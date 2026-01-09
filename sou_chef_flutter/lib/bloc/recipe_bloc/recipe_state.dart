@@ -1,30 +1,39 @@
 part of 'recipe_bloc.dart';
 
-abstract class RecipeState extends Equatable{
-  const RecipeState();
+enum RecipeStatus{initial, success, failure}
 
-  @override
-  List<Object> get props => [];
-}
-
-class RecipeInitial extends RecipeState{}
-
-class RecipeLoading extends RecipeState{}
-
-class RecipeLoaded extends RecipeState{
+class RecipeState extends Equatable{
+  final RecipeStatus status;
   final List<Recipe> recipes;
+  final bool hasReachedMax;
+  final int page;
+  final String? errorMessage;
 
-  const RecipeLoaded(this.recipes);
+  const RecipeState({
+    this.status = RecipeStatus.initial,
+    this.recipes = const <Recipe>[],
+    this.hasReachedMax = false,
+    this.page = 1,
+    this.errorMessage,
+  });
+
+  RecipeState copyWith({
+    RecipeStatus? status,
+    List<Recipe>? recipes,
+    bool? hasReachedMax,
+    int? page,
+    String? errorMessage,
+  }) {
+    return RecipeState(
+      status: status ?? this.status,
+      recipes : recipes ?? this.recipes,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      page: page ?? this.page,
+      errorMessage: errorMessage,
+    );
+  }
 
   @override
-  List<Object> get props => [recipes];
-}
-
-class RecipeError extends RecipeState{
-  final String message;
-
-  const RecipeError(this.message);
-
-  @override
-  List<Object> get props => [message];
+  List<Object?> get props => [status, recipes, hasReachedMax, page, errorMessage];
+  
 }

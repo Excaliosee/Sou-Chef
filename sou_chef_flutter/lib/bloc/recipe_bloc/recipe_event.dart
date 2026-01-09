@@ -7,9 +7,13 @@ abstract class RecipeEvent extends Equatable{
   List<Object> get props => [];
 }
 
-class FetchRecipes extends RecipeEvent{}
+class FetchRecipes extends RecipeEvent{
+  final bool isRefreshed;
+  const FetchRecipes({this.isRefreshed = false});
 
-class FetchMyRecipes extends RecipeEvent{}
+  @override
+  List<Object> get props => [isRefreshed];
+}
 
 class DeleteRecipe extends RecipeEvent{
   final int recipeId;
@@ -21,4 +25,11 @@ class ToggleLike extends RecipeEvent{
   const ToggleLike(this .recipeId);
 }
 
-class FetchFavorites extends RecipeEvent{}
+class ExternalLikeUpdate extends RecipeEvent {
+  final int recipeId;
+  final bool isLiked;
+  const ExternalLikeUpdate(this.recipeId, this.isLiked);
+
+  @override
+  List<Object> get props => [recipeId, isLiked];
+}

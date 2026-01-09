@@ -1,47 +1,100 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
+import 'package:sou_chef_flutter/bloc/recipe_bloc/blocs.dart';
 import 'package:sou_chef_flutter/models/recipe.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sou_chef_flutter/repositories/recipe_repository.dart';
+import 'package:stream_transform/stream_transform.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 
 part 'recipe_event.dart';
 part 'recipe_state.dart';
 
-class RecipeBloc extends Bloc<RecipeEvent,RecipeState>{
-  final RecipeRepository _recipeRepository;
+const throttleDuration = Duration(milliseconds: 100);
 
-  RecipeBloc(this._recipeRepository) : super(RecipeInitial()) {
-    on<FetchRecipes>(_onFetchRecipes);
-    on<FetchMyRecipes>(_onFetchMyRecipes);
-    on<DeleteRecipe>(_deleteRecipe);
+EventTransformer<E> throttleDroppable<E>(Duration duration) {
+  return (events, mapper) {
+    return droppable<E>().call(events.throttle(duration), mapper);
+  };
+}
+
+typedef RecipeFetcher = Future<List<Recipe>> Function({required int page, int limit});
+
+class RecipeBloc extends Bloc<RecipeEvent,RecipeState>{
+  final RecipeRepository recipeRepository;
+  final RecipeFetcher fetchMethod;
+
+  StreamSubscription? _likeSubscription;
+
+  RecipeBloc({required this.recipeRepository, required this.fetchMethod}) : super(const RecipeState()) {
+    on<FetchRecipes>(_onFetchRecipes, transformer: throttleDroppable(throttleDuration));
     on<ToggleLike>(_toggleLike);
-    on<FetchFavorites>(_fetchFavorites);
+    on<ExternalLikeUpdate>(_onExternalLikeUpdate);
+    on<DeleteRecipe>(_deleteRecipe);
+
+    _likeSubscription = recipeRepository.likeUpdates.listen((update) {
+      add(ExternalLikeUpdate(update.recipeId, update.isLiked));
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _likeSubscription?.cancel();
+    return super.close();
+  }
+
+  Future<void> _onExternalLikeUpdate(
+    ExternalLikeUpdate event, 
+    Emitter<RecipeState> emit
+  ) async {
+    if (this is FavoriteBloc && event.isLiked == false) {
+      final updatedRecipes = List.of(state.recipes)..removeWhere((r) => r.id == event.recipeId);
+      return emit(state.copyWith(recipes: updatedRecipes));
+    }
+    final updatedRecipes = state.recipes.map((recipe) {
+      if (recipe.id == event.recipeId) {
+        int newCount = event.isLiked ? recipe.likesCount + 1 : (recipe.likesCount > 0 ? recipe.likesCount - 1 : 0);
+
+        return recipe.copyWith(
+          isLiked: event.isLiked,
+          likesCount: newCount,
+        );
+      }
+      return recipe;
+    }).toList();
+
+    emit(state.copyWith(recipes: updatedRecipes));
   }
 
   Future<void> _onFetchRecipes(
     FetchRecipes event,
     Emitter<RecipeState> emit,
   ) async {
-    emit(RecipeLoading());
-    try{
-      final recipes = await _recipeRepository.fetchRecipes();
-      emit(RecipeLoaded(recipes));
-    }
-    catch(e) {
-      emit(RecipeError("Failed to fetch recipes: ${e.toString()}"));
-    }
-  }
+    if (state.hasReachedMax && !event.isRefreshed) return;
 
-  Future<void> _onFetchMyRecipes(
-    FetchMyRecipes event,
-    Emitter<RecipeState> emit,
-  ) async {
-    emit(RecipeLoading());
     try {
-      final recipes = await _recipeRepository.fetchMyRecipes();
-      emit(RecipeLoaded(recipes));
+      if (state.status == RecipeStatus.initial || event.isRefreshed) {
+        final recipes = await fetchMethod(page: 1, limit: 20);
+        return emit(state.copyWith(
+          status: RecipeStatus.success,
+          recipes: recipes,
+          hasReachedMax: recipes.length < 20,
+          page: 2,
+        ));
+      }
+
+      final recipes = await fetchMethod(page: state.page, limit: 20);
+
+      emit(recipes.isEmpty ? state.copyWith(hasReachedMax: true) : state.copyWith(
+        status: RecipeStatus.success,
+        recipes: List.of(state.recipes)..addAll(recipes),
+        hasReachedMax: recipes.length < 20,
+        page: state.page + 1,
+      ));
     }
-    catch(e) {
-      emit(RecipeError("Failed to fetch your recipes: ${e.toString()}"));
+    catch (e) {
+      emit(state.copyWith(status: RecipeStatus.failure));
     }
   }
 
@@ -49,12 +102,14 @@ class RecipeBloc extends Bloc<RecipeEvent,RecipeState>{
     DeleteRecipe event,
     Emitter<RecipeState> emit,
   ) async {
+    final updatedRecipes = List.of(state.recipes)..removeWhere((r) => r.id == event.recipeId);
+    emit(state.copyWith(recipes: updatedRecipes));
+
     try {
-      await _recipeRepository.deleteRecipe(event.recipeId);
-      add(FetchMyRecipes());
+      await recipeRepository.deleteRecipe(event.recipeId);
     }
-    catch(e) {
-      emit(RecipeError("Could not delete recipe: ${e.toString()}"));
+    catch (e) {
+      add(const FetchRecipes(isRefreshed: true));
     }
   }
 
@@ -62,56 +117,15 @@ class RecipeBloc extends Bloc<RecipeEvent,RecipeState>{
     ToggleLike event,
     Emitter<RecipeState> emit,
   ) async {
-    if (state is RecipeLoaded) {
-      final current = state as RecipeLoaded;
-      final updatedRecipe = current.recipes.map((recipe) {
-        if (recipe.id == event.recipeId) {
-          final isNowLiked = !recipe.isLiked;
-          return Recipe(
-            id: recipe.id,
-            title: recipe.title,
-            description: recipe.description,
-            prepTime: recipe.prepTime,
-            cookTime: recipe.cookTime,
-            createdAt: recipe.createdAt,
-            ingredients: recipe.ingredients,
-            steps: recipe.steps,
-            createdBy: recipe.createdBy,
-            isLiked: isNowLiked,
-            likesCount: isNowLiked ? recipe.likesCount + 1 : recipe.likesCount - 1,
-          );
-        }
-        return recipe;
-      }).toList();
-
-      emit(RecipeLoaded(updatedRecipe));
-
-      try {
-        await _recipeRepository.toggleLike(event.recipeId);
-      }
-      catch(e) {
-        print("Error liking recipe: $e");
-        add(FetchRecipes());
-      }
-    }
-    else {
-      add(FetchRecipes());
-    }
-
-    
-  }
-
-  Future<void> _fetchFavorites(
-    FetchFavorites event,
-    Emitter<RecipeState> emit,
-  ) async {
-    emit(RecipeLoading());
+    bool currentStatus = false;
     try {
-      final recipes = await _recipeRepository.getFavorites();
-      emit(RecipeLoaded(recipes));
+      final r = state.recipes.firstWhere((r) => r.id == event.recipeId);
+      currentStatus = r.isLiked;
     }
-    catch(e) {
-      emit(RecipeError("Failed to fetch your recipes: ${e.toString()}"));
+    catch (_) {
+      if (this is FavoriteBloc) currentStatus = true;
     }
+
+    await recipeRepository.toggleLike(event.recipeId, currentStatus);
   }
 }

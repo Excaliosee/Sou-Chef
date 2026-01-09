@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sou_chef_flutter/bloc/recipe_bloc/blocs.dart';
 import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/repositories/recipe_repository.dart';
 import 'firebase_options.dart';
@@ -20,10 +21,34 @@ Future<void> main() async {
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider(
-            create: (context) => RecipeBloc(
-              RepositoryProvider.of<RecipeRepository>(context),
-            )..add(FetchRecipes()),
+          BlocProvider<FeedBloc>(
+            create: (context) {
+              final repo = context.read<RecipeRepository>();
+              return FeedBloc(
+                recipeRepository: repo, 
+                fetchMethod: repo.fetchRecipes,
+              )..add(const FetchRecipes());
+            }
+          ),
+
+          BlocProvider<MyRecipesBloc>(
+            create: (context) {
+              final repo = context.read<RecipeRepository>();
+              return MyRecipesBloc(
+                recipeRepository: repo, 
+                fetchMethod: repo.fetchMyRecipes,
+              )..add(const FetchRecipes());
+            }
+          ),
+
+          BlocProvider<FavoriteBloc>(
+            create: (context) {
+              final repo = context.read<RecipeRepository>();
+              return FavoriteBloc(
+                recipeRepository: repo, 
+                fetchMethod: repo.getFavorites,
+              )..add(const FetchRecipes());
+            }
           ),
         ],
         child: MyApp(),

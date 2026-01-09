@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 from rest_framework.decorators import api_view, parser_classes, action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from rest_framework import status, viewsets, permissions
+from rest_framework import status, viewsets, permissions, filters
+
+from rest_framework.pagination import PageNumberPagination
 
 from .models import Recipe
 from .serializers import RecipeSerializer
@@ -30,12 +32,20 @@ except Exception as e:
     print(f"Error configuring Gemini: {e}")
     client = None
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     authentication_classes = [FirebaseAuthentication, SessionAuthentication]
     # permission_classes = [permissions.AllowAny]
+
+    filter_backends = [filters.SearchFilter]
+    search_field = ['title', 'description', 'ingredient_name']
 
     def get_queryset(self):
         return Recipe.objects.prefetch_related('ingredients__ingredient', 'steps').all().order_by('-created_at')
@@ -46,7 +56,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail = False, methods = ["get"], permission_classes = [permissions.IsAuthenticated])
     def mine(self, request):
         user = request.user
-        my_recipes = Recipe.objects.filter(created_by = user)
+        my_recipes = Recipe.objects.filter(created_by = user).order_by('created-at')
+
+        page = self.paginate_queryset(my_recipes)
+        if page is not None:
+            serializer = self.get_serializer(page, many = True)
+            return self.get_paginated_response(serializer.data)
+        
         serializer = self.get_serializer(my_recipes, many = True)
         return Response(serializer.data)
     
@@ -67,6 +83,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], permission_classes = [permissions.IsAuthenticated])
     def favorites(self, request):
         liked_recipes = Recipe.objects.filter(likes = request.user).order_by("-id")
+
+        page = self.paginate_queryset(liked_recipes)
+        if page is not None:
+            serializer = self.get_serializer(page, many = True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(liked_recipes, many = True)
         return Response(serializer.data)

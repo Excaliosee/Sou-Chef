@@ -49,6 +49,8 @@ dependencies:
   http_parser: ^4.0.2
   flutter_tts: ^4.2.3
   google_nav_bar: ^5.0.7
+  stream_transform: ^2.1.1
+  bloc_concurrency: ^0.3.0
 
 dev_dependencies:
   flutter_test:

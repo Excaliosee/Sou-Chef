@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:sou_chef_flutter/bloc/recipe_bloc/blocs.dart';
 import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/bloc/timer_bloc/timer_bloc.dart';
 import 'package:sou_chef_flutter/models/recipe.dart';
@@ -24,6 +25,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   // bool _isRecording = false;
   // bool _isProcessing = false;
 
+  late bool _isLiked;
+  late int _likesCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLiked = widget.recipe.isLiked;
+    _likesCount = widget.recipe.likesCount;
+  }
+
   @override
   void dispose() {
     _timerBloc.close();
@@ -31,6 +42,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _recordingService.dispose();
     super.dispose();
   }
+
+  void _onToggleLike() {
+    setState(() {
+      _isLiked = !_isLiked;
+      _likesCount = _isLiked ? _likesCount + 1 : _likesCount - 1;
+    });
+    final event = ToggleLike(widget.recipe.id);
+    try {context.read<FeedBloc>().add(event);} catch(_) {};
+    try {context.read<MyRecipesBloc>().add(event);} catch(_) {};
+    try {context.read<FavoriteBloc>().add(const FetchRecipes(isRefreshed: true));} catch(_) {};
+  }
+
 
   Future<void> _speak(String text) async {
     await _flutterTts.awaitSpeakCompletion(true);
@@ -141,32 +164,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           appBar: AppBar(
             title: Text(widget.recipe.title),
             actions: [
-              BlocBuilder<RecipeBloc,RecipeState>(
-                builder: (context, state) {
-                  Recipe curr = widget.recipe;
-                  if (state is RecipeLoaded) {
-                    try {
-                      curr = state.recipes.firstWhere((r) => r.id == widget.recipe.id);
-                    }
-                    catch(e) {
-                      print("Failed");
-                    }
-                  }
-
-                  return Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          context.read<RecipeBloc>().add(ToggleLike(curr.id));
-                        },
-                        icon: Icon(curr.isLiked ? Icons.favorite : Icons.favorite_border, color: curr.isLiked ? Colors.red : null),
-                      ),
-                      Text("${curr.likesCount}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ],
-                  );
-                }
+              Row(
+                children: [
+                  IconButton(onPressed: _onToggleLike, icon: Icon(_isLiked ? Icons.favorite : Icons.favorite_border, color: _isLiked ? Colors.red : null)),
+                  Text("$_likesCount", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 16),
+                ],
               ),
-            ]
+            ],
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
           // floatingActionButton: FloatingActionButton(

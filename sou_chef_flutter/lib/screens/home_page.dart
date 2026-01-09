@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:sou_chef_flutter/bloc/recipe_bloc/blocs.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/screens/likes_page.dart';
@@ -38,7 +39,23 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    context.read<RecipeBloc>().add(FetchRecipes());
+    context.read<FeedBloc>().add(FetchRecipes());
+  }
+
+  void _handlePageChange(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    
+    if (index == 0) {
+      context.read<FeedBloc>().add(const FetchRecipes());
+    }
+    else if (index == 1) {
+      context.read<FavoriteBloc>().add(const FetchRecipes(isRefreshed: true));
+    }
+    else if (index == 3) {
+      context.read<MyRecipesBloc>().add(const FetchRecipes(isRefreshed: true));
+    }
   }
 
   @override
@@ -54,7 +71,7 @@ class _HomePageState extends State<HomePage> {
               if (!context.mounted) {
                 return;
               }
-              context.read<RecipeBloc>().add(FetchRecipes());
+              context.read<FeedBloc>().add(FetchRecipes());
             },
             backgroundColor: Theme.of(context).primaryColor,
             child: const Icon(Icons.add),
@@ -66,11 +83,7 @@ class _HomePageState extends State<HomePage> {
         
           body: PageView(
             controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
+            onPageChanged: _handlePageChange,
             children: _pages,
           ),
         
@@ -96,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                   iconSize: 24,
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   duration: Duration(milliseconds: 400),
-                  tabBackgroundColor: Colors.grey[100]!,
+                  tabBackgroundColor: Colors.grey[100]!,  
                   color: Colors.black,
                   tabs: [
                     GButton(
@@ -123,7 +136,13 @@ class _HomePageState extends State<HomePage> {
                     });
                     _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
                     if (index == 0) {
-                      context.read<RecipeBloc>().add(FetchRecipes());
+                      context.read<FeedBloc>().add(FetchRecipes());
+                    }
+                    if (index == 1) {
+                      context.read<FavoriteBloc>().add(const FetchRecipes(isRefreshed: true));
+                    }
+                    if (index == 3) {
+                      context.read<MyRecipesBloc>().add(const FetchRecipes(isRefreshed: true));
                     }
                   },
                 ),
