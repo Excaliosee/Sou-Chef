@@ -56,7 +56,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail = False, methods = ["get"], permission_classes = [permissions.IsAuthenticated])
     def mine(self, request):
         user = request.user
-        my_recipes = Recipe.objects.filter(created_by = user).order_by('created-at')
+        my_recipes = Recipe.objects.filter(created_by = user).order_by('created_at')
 
         page = self.paginate_queryset(my_recipes)
         if page is not None:

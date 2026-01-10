@@ -5,8 +5,10 @@ import 'package:sou_chef_flutter/bloc/recipe_bloc/blocs.dart';
 import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/bloc/timer_bloc/timer_bloc.dart';
 import 'package:sou_chef_flutter/models/recipe.dart';
+import 'package:sou_chef_flutter/repositories/recipe_repository.dart';
 import 'package:sou_chef_flutter/widgets/my_timer.dart';
 import 'package:sou_chef_flutter/services/voice_recording_service.dart';
+import 'dart:async';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -27,12 +29,24 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   late bool _isLiked;
   late int _likesCount;
+  StreamSubscription? _likeSubscription;
 
   @override
   void initState() {
     super.initState();
     _isLiked = widget.recipe.isLiked;
     _likesCount = widget.recipe.likesCount;
+    final repo = context.read<RecipeRepository>();
+    _likeSubscription = repo.likeUpdates.listen((update) {
+      if (update.recipeId == widget.recipe.id) {
+        if (!mounted) return;
+        setState(() {
+          if (_isLiked == update.isLiked) return;
+          _isLiked = update.isLiked;
+          _likesCount = _isLiked ? _likesCount + 1 : (_likesCount > 0 ? _likesCount - 1 : 0);
+        });
+      }
+    });
   }
 
   @override
@@ -40,18 +54,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _timerBloc.close();
     _flutterTts.stop();
     _recordingService.dispose();
+    _likeSubscription?.cancel();
     super.dispose();
   }
 
   void _onToggleLike() {
-    setState(() {
-      _isLiked = !_isLiked;
-      _likesCount = _isLiked ? _likesCount + 1 : _likesCount - 1;
-    });
-    final event = ToggleLike(widget.recipe.id);
-    try {context.read<FeedBloc>().add(event);} catch(_) {};
-    try {context.read<MyRecipesBloc>().add(event);} catch(_) {};
-    try {context.read<FavoriteBloc>().add(const FetchRecipes(isRefreshed: true));} catch(_) {};
+    context.read<RecipeRepository>().toggleLike(widget.recipe.id, _isLiked);
   }
 
 

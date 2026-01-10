@@ -47,7 +47,7 @@ class _MyRecipesPageState extends State<MyRecipesPage> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state.status == RecipeStatus.failure && state.recipes.isEmpty) {
+        if (state.status == RecipeStatus.failure) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

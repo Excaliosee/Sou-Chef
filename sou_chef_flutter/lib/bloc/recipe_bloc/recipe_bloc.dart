@@ -29,7 +29,7 @@ class RecipeBloc extends Bloc<RecipeEvent,RecipeState>{
 
   RecipeBloc({required this.recipeRepository, required this.fetchMethod}) : super(const RecipeState()) {
     on<FetchRecipes>(_onFetchRecipes, transformer: throttleDroppable(throttleDuration));
-    on<ToggleLike>(_toggleLike);
+    on<ToggleLike>(_toggleLike, transformer: throttleDroppable(const Duration(milliseconds: 300)));
     on<ExternalLikeUpdate>(_onExternalLikeUpdate);
     on<DeleteRecipe>(_deleteRecipe);
 
@@ -54,6 +54,9 @@ class RecipeBloc extends Bloc<RecipeEvent,RecipeState>{
     }
     final updatedRecipes = state.recipes.map((recipe) {
       if (recipe.id == event.recipeId) {
+
+        if (recipe.isLiked == event.isLiked) return recipe;
+
         int newCount = event.isLiked ? recipe.likesCount + 1 : (recipe.likesCount > 0 ? recipe.likesCount - 1 : 0);
 
         return recipe.copyWith(

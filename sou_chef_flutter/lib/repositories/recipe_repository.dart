@@ -92,7 +92,12 @@ class RecipeRepository {
 
   Future<void> toggleLike(int id, bool currentLikeStatus) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("You ar elogged out.");
+    if (user == null) {
+      print("You are not logged in.");
+      throw Exception("You ar elogged out.");
+    }
+
+    print("Toggling like for id: $id. currently: $currentLikeStatus");
 
     final newStatus = !currentLikeStatus;
     _likeUpdateController.add(LikeUpdate(recipeId: id, isLiked: newStatus));
@@ -101,6 +106,7 @@ class RecipeRepository {
     final url = Uri.parse("$baseURL/api/v1/recipes/$id/like/");
 
     try {
+      print("Sending post to $url");
       final response = await http.post(
         url,
         headers: {
@@ -109,12 +115,20 @@ class RecipeRepository {
         }
       );
 
+      print("Server response code: ${response.statusCode}");
+      print("Server response body: ${response.body}");
+
       if (response.statusCode != 200) {
+        print("Server failed");
         _likeUpdateController.add(LikeUpdate(recipeId: id, isLiked: currentLikeStatus));
         throw Exception("Could not like.");
       }
+      else {
+        print("Server successful");
+      }
     }
     catch (e) {
+      print("Network error");
       _likeUpdateController.add(LikeUpdate(recipeId: id, isLiked: currentLikeStatus));
       throw Exception("Error: $e");
     }
