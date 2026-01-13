@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -167,146 +168,189 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           }
         },
         child: Scaffold(
-          appBar: AppBar(
-            title: Text(widget.recipe.title),
-            actions: [
-              Row(
-                children: [
-                  IconButton(onPressed: _onToggleLike, icon: Icon(_isLiked ? Icons.favorite : Icons.favorite_border, color: _isLiked ? Colors.red : null)),
-                  Text("$_likesCount", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 16),
+          body: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 300,
+                pinned: true,
+                stretch: true,
+                backgroundColor: Colors.orange,
+                iconTheme: const IconThemeData(color: Colors.white),
+                flexibleSpace: FlexibleSpaceBar(
+                  title: Text(
+                    widget.recipe.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      shadows: [Shadow(color: Colors.black45, blurRadius: 10)],
+                    ),
+                  ),
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      widget.recipe.image != null
+                        ? CachedNetworkImage(
+                          imageUrl: widget.recipe.image!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.grey[300]),
+                          errorWidget: (context, url, error) => const Icon(Icons.broken_image),
+                          )
+                        : Container(
+                          color: Colors.orange.shade200,
+                          child: const Icon(Icons.restaurant, size: 80, color: Colors.white54),
+                        ),
+
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Colors.black54],
+                            stops: [0.6, 1.0],
+                          )
+                        )
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black26,
+                    ),
+                    child: IconButton(
+                      onPressed: _onToggleLike,
+                      icon: Icon(
+                        _isLiked ? Icons.favorite : Icons.favorite_border,
+                        color: _isLiked ? Colors.red : Colors.white,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ],
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-          // floatingActionButton: FloatingActionButton(
-          //   onPressed: _isProcessing ? null : _handleVoiceCommand,
-          //   backgroundColor: _isRecording ? Colors.redAccent : Theme.of(context).primaryColor,
-          //   child: _isProcessing 
-          //   ? const SizedBox(
-          //     width: 24,
-          //     height: 24,
-          //     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-          //   )
-          //   : Icon(_isRecording ? Icons.stop : Icons.mic),
-          // ),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 80.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
 
-                Center(child: MyTimer(initialDuration: widget.recipe.cookTime * 60)),
-                const Divider(height: 32, thickness: 1),
-                
-                Text(
-                  "Description",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-        
-                SizedBox(height: 8),
-        
-                Text(
-                  widget.recipe.description,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-        
-                const Divider(height: 32, thickness: 1),
-        
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _looker("Prep Time", "${widget.recipe.prepTime} mins"),
-                    _looker("Cook Time", "${widget.recipe.cookTime} mins"),
-                  ],
-                ),
-        
-                const Divider(height: 32, thickness: 1),
-        
-                Text(
-                  'Ingredients',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                
-                const SizedBox(height: 16),
-      
-                if (widget.recipe.ingredients.isEmpty)
-                  const Center(child: Text("No ingredients listed.")),
-
-                ...widget.recipe.ingredients.map((item) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical:6.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.circle, size: 6, color: Colors.grey),
-                        const SizedBox(width: 8),
-                        Text(
-                          item.quantity,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                  child: Column(
+                    children: [
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          "$_likesCount likes",
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          item.name,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                      ),
 
-                const Divider(height: 32, thickness: 1),
+                      const SizedBox(height: 10),
 
-                Text(
-                  "Instructions",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      Center(child: MyTimer(initialDuration: widget.recipe.cookTime * 60)),
+                      const Divider(height: 32, thickness: 1),
+
+                      Text(
+                        "Description",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Text(
+                        widget.recipe.description,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+
+                      const Divider(height: 32, thickness: 1),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _looker("Prep Time", "${widget.recipe.prepTime} mins"),
+                          _looker("Cook Time", "${widget.recipe.cookTime} mins"),
+                        ],
+                      ),
+
+                      const Divider(height: 32, thickness: 1),
+
+                      Text(
+                        "Ingredients",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+
+                      const SizedBox(height: 16),
+                      if (widget.recipe.ingredients.isEmpty)
+                        const Center(child: Text("No ingredients listed.")),
+                      ...widget.recipe.ingredients.map((item) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.circle, size: 6, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              Text(
+                                item.quantity,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                item.name,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+
+                      const Divider(height: 32, thickness: 1),
+
+                      Text(
+                        "Instructions",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      if (widget.recipe.steps.isEmpty)
+                        const Text("No instructions provided."),
+                      ...widget.recipe.steps.map((step) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 28,
+                                height: 28,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade400,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  "${step.stepNumber}",
+                                  style: const TextStyle(
+                                    color: Colors.blueGrey,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  step.instruction,
+                                  style: const TextStyle(fontSize: 16, height: 1.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),     
+                    ],
+                  ),
                 ),
-
-                const SizedBox(height: 16),
-
-                if (widget.recipe.steps.isEmpty)
-                  const Text("No instructions provided."),
-
-                ...widget.recipe.steps.map((step) {
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: 24),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade400,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            "${step.stepNumber}",
-                            style: TextStyle(
-                              color: Colors.blueGrey,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 12),
-
-                        Expanded(
-                          child: Text(
-                            step.instruction,
-                            style: const TextStyle(fontSize: 16, height: 1.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                })
-              ],
-            ),
+              )
+            ],
           ),
         ),
       ),
