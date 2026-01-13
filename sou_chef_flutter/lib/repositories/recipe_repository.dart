@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:sou_chef_flutter/models/recipe.dart';
 
-final String baseURL = "http://192.168.1.4:8000";
+final String baseURL = "http://192.168.1.7:8000";
 
 class LikeUpdate {
   final int recipeId;
@@ -29,7 +30,7 @@ class RecipeRepository {
     return _fetchHelper("$baseURL/api/v1/recipes/favorites/?page=$page&page_size=$limit");
   }
 
-  Future<void> createRecipe(Map<String, dynamic> recipeData) async {
+  Future<void> createRecipe(Map<String, dynamic> recipeData, File? imageFile) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception("You are not logged in.");
 
@@ -44,20 +45,31 @@ class RecipeRepository {
     print("Token (First 20 chars): ${token.substring(0, 20)}...");
 
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token"
-        },
-        body: jsonEncode(recipeData),
-      );
+      var request = http.MultipartRequest("POST", url);
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      request.headers.addAll({
+        "Authorization": "Bearer $token",
+      });
+
+      request.fields["title"] = recipeData["title"];
+      request.fields['description'] = recipeData['description'];
+      request.fields['prep_time'] = recipeData['prep_time'].toString();
+      request.fields['cook_time'] = recipeData['cook_time'].toString();
+      request.fields['ingredients'] = jsonEncode(recipeData['ingredients']);
+      request.fields['steps'] = jsonEncode(recipeData['steps']);
+
+      if (imageFile != null) {
+        request.files.add(await http.MultipartFile.fromPath("image", imageFile.path));
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         print("Recipe created successfully.");
       }
       else {
-        throw Exception("Could not create a recipe. Status Code: ${response.statusCode}\nBody: ${response.body}");
+        throw Exception("Failed to create a recipe. Code: ${response.statusCode}");
       }
     }
     catch (e) {

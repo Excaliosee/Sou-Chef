@@ -19,6 +19,8 @@ class Recipe(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_recipes", blank=True)
 
+    image = models.ImageField(upload_to="recipe_images/", null=True, blank=True)
+
     def __str__(self): 
         return self.title
     

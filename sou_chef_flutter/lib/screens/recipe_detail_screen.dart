@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:sou_chef_flutter/bloc/recipe_bloc/blocs.dart';
-import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/bloc/timer_bloc/timer_bloc.dart';
 import 'package:sou_chef_flutter/models/recipe.dart';
 import 'package:sou_chef_flutter/repositories/recipe_repository.dart';

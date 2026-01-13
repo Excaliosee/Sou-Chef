@@ -1,9 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:sou_chef_flutter/bloc/recipe_bloc/blocs.dart';
 import 'package:sou_chef_flutter/bloc/recipe_bloc/recipe_bloc.dart';
 import 'package:sou_chef_flutter/repositories/recipe_repository.dart';
 import 'package:sou_chef_flutter/widgets/my_button.dart';
+import 'dart:io';
 
 class _IngredientRow{
   final TextEditingController name = TextEditingController();
@@ -31,6 +34,19 @@ class _AddRecipeState extends State<AddRecipe> {
   final List<_IngredientRow> _ingredientRows = [];
   final List<_StepRow> _stepRows = [];
   bool _isSubmitting = false;
+
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -121,10 +137,10 @@ class _AddRecipeState extends State<AddRecipe> {
         };
 
         final repository = RepositoryProvider.of<RecipeRepository>(context);
-        await repository.createRecipe(recipeData);
+        await repository.createRecipe(recipeData, _selectedImage);
 
         if (mounted) {
-          context.read<RecipeBloc>().add(FetchRecipes());
+          context.read<FeedBloc>().add(const FetchRecipes(isRefreshed: true));
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Recipe Created Successfully.")),
@@ -189,6 +205,35 @@ class _AddRecipeState extends State<AddRecipe> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 200,
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[400]!),
+                    image: _selectedImage != null 
+                      ? DecorationImage(
+                        image: FileImage(_selectedImage!),
+                        fit: BoxFit.cover,
+                        )
+                      : null
+                  ),
+                  child: _selectedImage == null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                          const SizedBox(height: 8),
+                          const Text("Tap to add a photo", style: TextStyle(color: Colors.grey))
+                        ],
+                      )
+                    : null
+                ),
+              ),
               _buildTextField(controller: _titleController, hint: "Title"),
               _buildTextField(controller: _descriptionController, hint: "Description"),
               Row(

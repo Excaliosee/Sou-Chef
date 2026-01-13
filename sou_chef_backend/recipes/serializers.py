@@ -14,39 +14,47 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ["name", "quantity"]
 
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = RecipeIngredientSerializer(many=True)
-    steps = RecipeStepSerializer(many=True)
+    ingredients = serializers.JSONField(write_only=True)
+    steps = serializers.JSONField(write_only=True)
     created_by = serializers.ReadOnlyField(source = "created_by.username")
 
     likes_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True, use_url = True)
 
     class Meta:
         model = Recipe
-        fields = ["id", "title", "description", "prep_time", "cook_time", "ingredients", "steps", "created_at", "created_by", "likes_count", "is_liked"]
+        fields = ["id", "title", "description", "prep_time", "cook_time", "ingredients", "steps", "created_at", "created_by", "likes_count", "is_liked", "image"]
         read_only_fields = ["created_by", "created_at"]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["ingredients"] = RecipeIngredientSerializer(instance.ingredients.all(), many=True).data
+        data["steps"] = RecipeStepSerializer(instance.steps.all(), many=True).data
+        return data
+    
     def create(self, validated_data):
         ingredients_data = validated_data.pop("ingredients")
         steps_data = validated_data.pop("steps")
 
-        with transaction.atomic():
-            recipe = Recipe.objects.create(**validated_data)
+        recipe = Recipe.objects.create(**validated_data)
 
-            for item in ingredients_data:
-                ingredient_name = item["ingredient"]["name"]
-                quantity = item["quantity"]
+        for item in ingredients_data:
+            ingredient_name = item["name"]
+            quantity = item["quantity"]
+            ingredient_name = ingredient_name.strip()
 
-                ingredient_name = ingredient_name.strip()
+            ingredient_obj, created = Ingredient.objects.get_or_create(
+                name__iexact = ingredient_name,
+                defaults={"name": ingredient_name}
+            )
 
-                ingredient_obj, _ = Ingredient.objects.get_or_create(name__iexact=ingredient_name, defaults={"name": ingredient_name})
+            RecipeIngredient.objects.create(recipe=recipe, ingredient = ingredient_obj, quantity=quantity)
 
-                RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient_obj, quantity=quantity)
-
-            for step in steps_data:
-                RecipeStep.objects.create(recipe=recipe, **step)
-                
-            return recipe
+        for step in steps_data:
+            RecipeStep.objects.create(recipe=recipe, **step)
+        
+        return recipe
         
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop("ingredients", None)
@@ -61,7 +69,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance.ingredients.all().delete()
 
             for item in ingredients_data:
-                ingredient_name = item["ingredient"]["name"]
+                ingredient_name = item["name"]
                 quantity = item["quantity"]
 
                 ingredient_name = ingredient_name.strip()

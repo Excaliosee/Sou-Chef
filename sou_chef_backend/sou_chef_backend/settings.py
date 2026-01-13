@@ -23,14 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
 
-ALLOWED_HOSTS = ['localhost', '10.0.2.2', '127.0.0.1', '192.168.1.4']
+ALLOWED_HOSTS = ['localhost', '10.0.2.2', '127.0.0.1', '192.168.1.7']
 
 
 # Application definition
@@ -139,3 +137,7 @@ REST_FRAMEWORK = {
 }
 
 FIREBASE_ADMIN_CREDENTIALS_PATH = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+
+MEDIA_URL = "/media/"
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

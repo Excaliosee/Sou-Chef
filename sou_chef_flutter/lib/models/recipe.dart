@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:equatable/equatable.dart';
 
 List<Recipe> recipeFromJson(String str) =>
     List<Recipe>.from(json.decode(str).map((x) => Recipe.fromJson(x)));
@@ -6,7 +7,7 @@ List<Recipe> recipeFromJson(String str) =>
 String recipeToJson(List<Recipe> data) =>
     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
-class Recipe {
+class Recipe extends Equatable{
   final int id;
   final String title;
   final String description;
@@ -21,8 +22,9 @@ class Recipe {
   final int likesCount;
   final bool isLiked;
   final String createdBy;
+  final String? image;
 
-  Recipe({
+  const Recipe({
     required this.id,
     required this.title,
     required this.description,
@@ -34,6 +36,7 @@ class Recipe {
     this.isLiked = false,
     this.likesCount = 0,
     required this.createdBy,
+    this.image,
   });
 
   Recipe copyWith({
@@ -42,6 +45,7 @@ class Recipe {
     String? description,
     bool? isLiked,
     int? likesCount,
+    String? image,
   }) {
     return Recipe(
       id: id ?? this.id,
@@ -55,6 +59,7 @@ class Recipe {
       createdBy: createdBy,
       isLiked: isLiked ?? this.isLiked,
       likesCount: likesCount ?? this.likesCount,
+      image: image ?? this.image,
     );
   }
 
@@ -82,6 +87,7 @@ class Recipe {
           ? List<RecipeStep>.from(json["steps"].map((x) => RecipeStep.fromJson(x)))
           : [],  
       createdBy: parseCreator(json["created_by"]),
+      image: json["image"],
     );
   }
 
@@ -97,14 +103,18 @@ class Recipe {
     "created_by": createdBy,
     "ingredients": List<dynamic>.from(ingredients.map((x) => x.toJson())),
     "steps": List<dynamic>.from(steps.map((x) => x.toJson())),
+    "image": image,
   };
+
+  @override
+  List<Object?> get props => [id, title, description, prepTime, cookTime, createdAt, ingredients, steps, likesCount, isLiked, createdBy, image];
 }
 
-class RecipeIngredient{
+class RecipeIngredient extends Equatable{
   final String name;
   final String quantity;
 
-  RecipeIngredient({required this.name, required this.quantity});
+  const RecipeIngredient({required this.name, required this.quantity});
 
   factory RecipeIngredient.fromJson(Map<String, dynamic> json) => RecipeIngredient(
     name: json["name"],
@@ -115,9 +125,12 @@ class RecipeIngredient{
     "name": name,
     "quantity": quantity
   };
+
+  @override
+  List<Object?> get props => [name, quantity];
 }
 
-class RecipeStep{
+class RecipeStep extends Equatable{
   final int stepNumber;
   final String instruction;
 
@@ -129,4 +142,7 @@ class RecipeStep{
     "step_number": stepNumber,
     "instruction": instruction
   };
+
+  @override  
+  List<Object?> get props => [stepNumber, instruction];
 }
