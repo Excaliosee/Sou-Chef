@@ -16,7 +16,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = serializers.JSONField(write_only=True)
     steps = serializers.JSONField(write_only=True)
-    created_by = serializers.ReadOnlyField(source = "created_by.username")
+    created_by = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
 
     likes_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
@@ -24,8 +25,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ["id", "title", "description", "prep_time", "cook_time", "ingredients", "steps", "created_at", "created_by", "likes_count", "is_liked", "image"]
-        read_only_fields = ["created_by", "created_at"]
+        fields = ["id", "title", "description", "prep_time", "cook_time", "ingredients", "steps", "created_at", "created_by", "likes_count", "is_liked", "image", "is_following"]
+        read_only_fields = ["created_at"]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -94,4 +95,17 @@ class RecipeSerializer(serializers.ModelSerializer):
         user = self.context.get("request").user
         if user and user.is_authenticated:
             return obj.likes.filter(id=user.id).exists()
+        return False
+    
+    def get_created_by(self, obj):
+        return {
+            "id": obj.created_by.id,
+            "username": obj.created_by.username,
+        }
+    
+    def get_is_following(self, obj):
+        user = self.context.get("request").user
+        if user and user.is_authenticated:
+            from users.models import Follow
+            return Follow.objects.filter(users_from=user, users_to=obj.created_by).exists()
         return False

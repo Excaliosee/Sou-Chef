@@ -21,8 +21,11 @@ class Recipe extends Equatable{
 
   final int likesCount;
   final bool isLiked;
-  final String createdBy;
   final String? image;
+
+  final int authorID;
+  final String createdBy;
+  final bool isFollowing;
 
   const Recipe({
     required this.id,
@@ -33,9 +36,11 @@ class Recipe extends Equatable{
     required this.createdAt,
     required this.ingredients,
     required this.steps,
+    required this.createdBy,
     this.isLiked = false,
     this.likesCount = 0,
-    required this.createdBy,
+    this.isFollowing = false,
+    required this.authorID,
     this.image,
   });
 
@@ -45,6 +50,7 @@ class Recipe extends Equatable{
     String? description,
     bool? isLiked,
     int? likesCount,
+    bool? isFollowing,
     String? image,
   }) {
     return Recipe(
@@ -57,9 +63,11 @@ class Recipe extends Equatable{
       ingredients: ingredients,
       steps: steps,
       createdBy: createdBy,
+      authorID: authorID,
       isLiked: isLiked ?? this.isLiked,
       likesCount: likesCount ?? this.likesCount,
       image: image ?? this.image,
+      isFollowing: isFollowing ?? this.isFollowing,
     );
   }
 
@@ -71,6 +79,11 @@ class Recipe extends Equatable{
       return (createdByField ?? "Unknown").toString();
     }
 
+    int parseAuthorID(dynamic createdByField) {
+      if (createdByField is Map) return createdByField["id"] ?? 0;
+      return 0;
+    }
+
     return Recipe(
       id: json["id"],
       title: json["title"] ?? "Untitled Recipe",
@@ -80,6 +93,8 @@ class Recipe extends Equatable{
       createdAt: DateTime.tryParse(json["created_at"].toString()) ?? DateTime.now(), 
       likesCount: json["likes_count"] ?? 0,  
       isLiked: json["is_liked"] == true || json["is_liked"] == 1 || json["is_liked"].toString() == 'true',
+      authorID: parseAuthorID(json["created_by"]),
+      isFollowing: json["is_following"] == true,
       ingredients: json["ingredients"] != null 
           ? List<RecipeIngredient>.from(json["ingredients"].map((x) => RecipeIngredient.fromJson(x)))
           : [],     
@@ -107,7 +122,7 @@ class Recipe extends Equatable{
   };
 
   @override
-  List<Object?> get props => [id, title, description, prepTime, cookTime, createdAt, ingredients, steps, likesCount, isLiked, createdBy, image];
+  List<Object?> get props => [id, title, description, prepTime, cookTime, createdAt, ingredients, steps, likesCount, isLiked, authorID, createdBy, isFollowing, image];
 }
 
 class RecipeIngredient extends Equatable{
@@ -134,7 +149,7 @@ class RecipeStep extends Equatable{
   final int stepNumber;
   final String instruction;
 
-  RecipeStep({required this.stepNumber, required this.instruction});
+  const RecipeStep({required this.stepNumber, required this.instruction});
 
   factory RecipeStep.fromJson(Map<String, dynamic> json) => RecipeStep(instruction: json["instruction"], stepNumber: json["step_number"]);
 

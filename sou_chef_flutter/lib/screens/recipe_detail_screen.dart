@@ -30,11 +30,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late int _likesCount;
   StreamSubscription? _likeSubscription;
 
+  late bool _isFollowing;
+  StreamSubscription? _followSubscription;
+
   @override
   void initState() {
     super.initState();
     _isLiked = widget.recipe.isLiked;
     _likesCount = widget.recipe.likesCount;
+    _isFollowing = widget.recipe.isFollowing;
     final repo = context.read<RecipeRepository>();
     _likeSubscription = repo.likeUpdates.listen((update) {
       if (update.recipeId == widget.recipe.id) {
@@ -46,6 +50,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         });
       }
     });
+    _followSubscription = repo.followUpdates.listen((update) {
+      print("IDs: ${update.userID} vs ${widget.recipe.authorID}");
+      if (update.userID == widget.recipe.authorID) {
+        if (!mounted) return;
+        setState(() {
+          _isFollowing = update.isFollowing;
+        });
+      }
+    });
   }
 
   @override
@@ -54,6 +67,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _flutterTts.stop();
     _recordingService.dispose();
     _likeSubscription?.cancel();
+    _followSubscription?.cancel();
     super.dispose();
   }
 
@@ -246,6 +260,44 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       const SizedBox(height: 10),
 
                       Center(child: MyTimer(initialDuration: widget.recipe.cookTime * 60)),
+                      const Divider(height: 32, thickness: 1),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.orange.shade100,
+                              child: const Icon(Icons.person, color: Colors.orange),
+                            ),
+                            const SizedBox(width: 12,),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("Created by", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                  Text(
+                                    widget.recipe.createdBy,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            OutlinedButton(
+                              onPressed: () {
+                                context.read<RecipeRepository>().toggleFollow(widget.recipe.authorID, _isFollowing);
+                              }, 
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: _isFollowing ? Colors.grey : Colors.orange),
+                                foregroundColor: _isFollowing ? Colors.grey : Colors.orange,
+                              ),
+                              child: Text(_isFollowing ? "Following" : "Follow"),
+                            ),
+                          ],
+                        ),
+                      ),
+
                       const Divider(height: 32, thickness: 1),
 
                       Text(

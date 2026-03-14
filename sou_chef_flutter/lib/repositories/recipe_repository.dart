@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:sou_chef_flutter/models/recipe.dart';
 
-final String baseURL = "http://192.168.1.7:8000";
+final String baseURL = "http://192.168.1.4:8000";
 
 class LikeUpdate {
   final int recipeId;
@@ -14,9 +14,18 @@ class LikeUpdate {
   LikeUpdate({required this.recipeId, required this.isLiked});
 }
 
+class FollowUpdate {
+  final int userID;
+  final bool isFollowing;
+  FollowUpdate({required this.userID, required this.isFollowing});
+}
+
 class RecipeRepository {
   final _likeUpdateController = StreamController<LikeUpdate>.broadcast();
   Stream<LikeUpdate> get likeUpdates => _likeUpdateController.stream;
+
+  final _followUpdateController = StreamController<FollowUpdate>.broadcast();
+  Stream<FollowUpdate> get followUpdates => _followUpdateController.stream;
 
   Future<List<Recipe>> fetchRecipes({required int page, int limit = 20}) async {
     return _fetchHelper("$baseURL/api/v1/recipes/?page=$page&page_size=$limit");
@@ -146,6 +155,36 @@ class RecipeRepository {
     }
   }
 
+  Future<void> toggleFollow(int targetUserId, bool currentFollowStatus) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("Logged out");
+
+    final newStatus = !currentFollowStatus;
+    _followUpdateController.add(FollowUpdate(userID: targetUserId, isFollowing: newStatus));
+
+    final token = await user.getIdToken(true);
+    final url = Uri.parse("$baseURL/api/v1/users/follow/$targetUserId/");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token"
+        },
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        _followUpdateController.add(FollowUpdate(userID: targetUserId, isFollowing: currentFollowStatus));
+        throw Exception("Could not toggle follow");
+      }
+    }
+    catch (E) {
+        _followUpdateController.add(FollowUpdate(userID: targetUserId, isFollowing: currentFollowStatus));
+        throw Exception("Error: $E");
+    }
+  }
+
   Future<List<Recipe>> searchRecipes(String query) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
@@ -225,6 +264,7 @@ class RecipeRepository {
 
   void dispose() {
     _likeUpdateController.close();
+    _followUpdateController.close();
   }
 
 }
